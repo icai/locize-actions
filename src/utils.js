@@ -38,3 +38,8 @@ export function isMissingOption(obj, props) {
 export function optionExist(obj, props) {
   return !isMissingOption(obj, props);
 }
+
+
+export function isEmptyObj(obj) {
+  return (Array.isArray(obj) && obj.length == 0) || Object.keys(obj).length == 0
+}

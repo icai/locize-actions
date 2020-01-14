@@ -57,6 +57,9 @@
       return false;
     }, false);
   }
+  function isEmptyObj(obj) {
+    return Array.isArray(obj) && obj.length == 0 || Object.keys(obj).length == 0;
+  }
 
   function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
 
@@ -91,7 +94,7 @@
 
   function getDefaults() {
     return {
-      lastUsedPath: 'https://api.locize.app/used/{{projectId}}/{{version}}/{{lng}}/{{ns}}',
+      actionPath: 'https://api.locize.app/{{action}}/{{projectId}}/{{version}}/{{lng}}/{{ns}}',
       referenceLng: 'en',
       crossDomain: true,
       setContentTypeJSON: false,
@@ -101,10 +104,9 @@
     };
   }
 
-  var locizeLastUsed = {
+  var locizeActions = {
     init: function init(options) {
-      var isI18next = options.t && typeof options.t === 'function';
-      this.options = isI18next ? _objectSpread({}, getDefaults(), {}, this.options, {}, options.options.locizeLastUsed) : _objectSpread({}, getDefaults(), {}, this.options, {}, options);
+      this.options = _objectSpread({}, getDefaults(), {}, this.options, {}, options);
       var hostname = window.location && window.location.hostname;
 
       if (hostname) {
@@ -116,37 +118,37 @@
       this.submitting = null;
       this.pending = {};
       this.done = {};
-      this.submit = debounce(this.submit, this.options.debounceSubmit); // intercept
-
-      if (isI18next) this.interceptI18next(options);
+      this.submit = debounce(this.submit, this.options.debounceSubmit);
     },
-    interceptI18next: function interceptI18next(i18next) {
+    actions: function actions(action, ns, key, value, parser) {
       var _this = this;
 
-      var origGetResource = i18next.services.resourceStore.getResource;
-
-      i18next.services.resourceStore.getResource = function (lng, ns, key, options) {
-        // call last used
-        if (key) _this.used(ns, key); // by pass orginal call
-
-        return origGetResource.call(i18next.services.resourceStore, lng, ns, key, options);
-      };
-    },
-    used: function used(ns, key) {
-      var _this2 = this;
+      if (typeof value == 'function') {
+        parser = value;
+        value = true;
+      }
 
       ['pending', 'done'].forEach(function (k) {
-        if (_this2.done[ns] && _this2.done[ns][key]) return;
-        if (!_this2[k][ns]) _this2[k][ns] = {};
-        _this2[k][ns][key] = true;
+        if (_this.done[ns] && _this.done[ns][key]) return;
+        if (!_this[k][ns]) _this[k][ns] = {};
+        _this[k][ns][key] = value;
       });
-      this.submit();
+      this.submit(action, parser);
     },
-    submit: function submit() {
-      var _this3 = this;
+    submit: function submit(action, parser) {
+      var _this2 = this;
 
       if (!this.isAllowed) return;
-      if (this.submitting) return this.submit(); // missing options
+      if (this.submitting) return this.submit(action, parser);
+
+      parser = parser || function (obj) {
+        if (action === 'used') {
+          return Object.keys(obj);
+        }
+
+        return obj;
+      }; // missing options
+
 
       var isMissing = isMissingOption(this.options, ['projectId', 'version', 'apiKey', 'referenceLng']);
       if (isMissing) return callback(new Error(isMissing));
@@ -159,21 +161,22 @@
         todo--;
 
         if (!todo) {
-          _this3.submitting = null;
+          _this2.submitting = null;
         }
       };
 
       namespaces.forEach(function (ns) {
-        var keys = Object.keys(_this3.submitting[ns]);
-        var url = replaceIn(_this3.options.lastUsedPath, ['projectId', 'version', 'lng', 'ns'], _objectSpread({}, _this3.options, {
-          lng: _this3.options.referenceLng,
-          ns: ns
+        var keys = parser(_this2.submitting[ns]);
+        var url = replaceIn(_this2.options.actionPath, ['projectId', 'version', 'lng', 'ns', 'action'], _objectSpread({}, _this2.options, {
+          lng: _this2.options.referenceLng,
+          ns: ns,
+          action: action
         }));
 
-        if (keys.length) {
+        if (!isEmptyObj(keys)) {
           ajax(url, _objectSpread({}, {
             authorize: true
-          }, {}, _this3.options), function (data, xhr) {
+          }, {}, _this2.options), function (data, xhr) {
             doneOne();
           }, keys);
         } else {
@@ -182,8 +185,8 @@
       });
     }
   };
-  locizeLastUsed.type = '3rdParty';
+  locizeActions.type = '3rdParty';
 
-  return locizeLastUsed;
+  return locizeActions;
 
 })));

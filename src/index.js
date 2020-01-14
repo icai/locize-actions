@@ -25,7 +25,7 @@ function ajax(url, options, callback, data, cache) {
 
 function getDefaults() {
   return {
-    lastUsedPath: 'https://api.locize.app/used/{{projectId}}/{{version}}/{{lng}}/{{ns}}',
+    actionPath: 'https://api.locize.app/{{action}}/{{projectId}}/{{version}}/{{lng}}/{{ns}}',
     referenceLng: 'en',
     crossDomain: true,
     setContentTypeJSON: false,
@@ -35,11 +35,9 @@ function getDefaults() {
   };
 }
 
-const locizeLastUsed = {
+const locizeActions = {
   init: function(options) {
-    const isI18next = options.t && typeof options.t === 'function';
-
-    this.options = isI18next ? { ...getDefaults(), ...this.options, ...options.options.locizeLastUsed } : { ...getDefaults(), ...this.options, ...options };
+    this.options =  { ...getDefaults(), ...this.options, ...options };
 
     const hostname = window.location && window.location.hostname;
     if (hostname) {
@@ -54,35 +52,30 @@ const locizeLastUsed = {
 
     this.submit = utils.debounce(this.submit, this.options.debounceSubmit);
 
-    // intercept
-    if (isI18next) this.interceptI18next(options);
   },
-
-  interceptI18next: function(i18next) {
-    const origGetResource = i18next.services.resourceStore.getResource;
-
-    i18next.services.resourceStore.getResource = (lng, ns, key, options) => {
-      // call last used
-      if (key) this.used(ns, key);
-
-      // by pass orginal call
-      return origGetResource.call(i18next.services.resourceStore, lng, ns, key, options);
+  actions: function(action, ns, key, value, parser) {
+    if (typeof value == 'function') {
+      parser = value;
+      value = true
     }
-  },
-
-  used: function(ns, key) {
     ['pending', 'done'].forEach((k) => {
       if (this.done[ns] && this.done[ns][key]) return;
       if (!this[k][ns]) this[k][ns] = {};
-      this[k][ns][key] = true;
+      this[k][ns][key] = value;
     });
-
-    this.submit();
+    this.submit(action, parser);
   },
 
-  submit: function() {
+  submit: function(action, parser) {
     if (!this.isAllowed) return;
-    if (this.submitting) return this.submit();
+    if (this.submitting) return this.submit(action, parser);
+
+    parser = parser || function(obj) {
+      if(action === 'used') {
+        return Object.keys(obj)
+      }
+      return obj
+    }
 
     // missing options
     const isMissing = utils.isMissingOption(this.options, ['projectId', 'version', 'apiKey', 'referenceLng'])
@@ -102,10 +95,10 @@ const locizeLastUsed = {
       }
     }
     namespaces.forEach((ns) => {
-      const keys = Object.keys(this.submitting[ns]);
-      let url = utils.replaceIn(this.options.lastUsedPath, ['projectId', 'version', 'lng', 'ns'], { ...this.options, lng: this.options.referenceLng, ns });
+      const keys = parser(this.submitting[ns]);
+      let url = utils.replaceIn(this.options.actionPath, ['projectId', 'version', 'lng', 'ns', 'action'], { ...this.options, lng: this.options.referenceLng, ns, action });
 
-      if (keys.length) {
+      if (!utils.isEmptyObj(keys)) {
         ajax(url, { ...{ authorize: true }, ...this.options }, (data, xhr) => { doneOne(); }, keys);
       } else {
         doneOne();
@@ -114,6 +107,6 @@ const locizeLastUsed = {
   }
 }
 
-locizeLastUsed.type = '3rdParty';
+locizeActions.type = '3rdParty';
 
-export default locizeLastUsed;
+export default locizeActions;
