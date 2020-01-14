@@ -61,7 +61,7 @@ const locizeActions = {
     ['pending', 'done'].forEach((k) => {
       if (this.done[ns] && this.done[ns][key]) return;
       if (!this[k][ns]) this[k][ns] = {};
-      this[k][ns][key] = value;
+      this[k][ns][key] = value || true;
     });
     this.submit(action, parser);
   },
