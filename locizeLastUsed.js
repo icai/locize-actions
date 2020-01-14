@@ -131,7 +131,7 @@
       ['pending', 'done'].forEach(function (k) {
         if (_this.done[ns] && _this.done[ns][key]) return;
         if (!_this[k][ns]) _this[k][ns] = {};
-        _this[k][ns][key] = value;
+        _this[k][ns][key] = value || true;
       });
       this.submit(action, parser);
     },
