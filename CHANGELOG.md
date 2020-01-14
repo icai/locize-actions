@@ -1,3 +1,9 @@
+# Changelog
+
+All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+
+### [5.1.1](https://github.com/icai/locize-actions/compare/v2.0.0...v5.1.1) (2020-01-14)
+
 ### 2.0.0
 
 - using the new `locize.app` domain replacing the deprecated `locize.io` domain

@@ -1,20 +1,19 @@
 {
-  "name": "locize-lastused",
-  "version": "2.0.0",
-  "description": "Using API lastUsed from cientside",
+  "name": "@w3cub/locize-actions",
+  "version": "5.1.1",
+  "description": "Using API actions from cientside",
   "main": "dist/commonjs/index.js",
   "jsnext:main": "dist/es/index.js",
   "module": "dist/es/index.js",
   "keywords": [
-    "i18next",
-    "i18next-plugin",
+    "api-plugin",
     "locize"
   ],
-  "homepage": "https://github.com/locize/locize-lastused",
-  "bugs": "https://github.com/locize/locize-lastused/issues",
+  "homepage": "https://github.com/icai/locize-actions",
+  "bugs": "https://github.com/icai/locize-actions/issues",
   "repository": {
     "type": "git",
-    "url": "git@github.com:locize/locize-lastused.git"
+    "url": "git@github.com:icai/locize-actions.git"
   },
   "dependencies": {
     "@babel/runtime": "^7.7.7"
@@ -61,6 +60,6 @@
     "preversion": "npm run test && npm run build && git push",
     "postversion": "git push && git push --tags"
   },
-  "author": "Jan Mühlemann <jan.muehlemann@gmail.com> (https://github.com/jamuhl)",
+  "author": "Terry Cai <gidcai@gmail.com> (https://github.com/icai)",
   "license": "MIT"
 }
