@@ -1,6 +1,6 @@
 {
   "name": "@w3cub/locize-actions",
-  "version": "5.1.1",
+  "version": "5.1.2",
   "description": "Using API actions from cientside",
   "main": "dist/commonjs/index.js",
   "jsnext:main": "dist/es/index.js",
